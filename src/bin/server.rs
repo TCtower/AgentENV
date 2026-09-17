@@ -109,7 +109,25 @@ async fn main() -> anyhow::Result<()> {
         .p2p_enabled
         .then(|| Arc::clone(&p2p_transport));
     let snapshot_manager = Arc::new(SnapshotManager::new(snapshot_p2p_transport)?);
-    let cluster_cpu_arc: Arc<RwLock<Option<String>>> = Arc::new(RwLock::new(None));
+    // MitoBox: a single node without the scheduler never receives a cluster CPU template,
+    // so guests get Firecracker's default vCPU features (on aarch64: no SVE/PAC). Allow a
+    // static template file; it is applied on fresh boots (template builds, cold starts) and
+    // snapshots inherit the resulting CPU state.
+    let static_cpu_config = match std::env::var_os("AENV_STATIC_CPU_CONFIG_PATH") {
+        Some(path) => {
+            let json = std::fs::read_to_string(&path).map_err(|err| {
+                anyhow::anyhow!("reading AENV_STATIC_CPU_CONFIG_PATH {path:?}: {err}")
+            })?;
+            serde_json::from_str::<serde_json::Value>(&json).map_err(|err| {
+                anyhow::anyhow!("parsing AENV_STATIC_CPU_CONFIG_PATH {path:?}: {err}")
+            })?;
+            info!(target: "agentenv", path = ?path, "using static cpu template");
+            Some(json)
+        }
+        None => None,
+    };
+    let cluster_cpu_arc: Arc<RwLock<Option<String>>> =
+        Arc::new(RwLock::new(static_cpu_config));
     let template_builder = Arc::new(TemplateBuilder::with_cpu_config(Arc::clone(
         &cluster_cpu_arc,
     )));
