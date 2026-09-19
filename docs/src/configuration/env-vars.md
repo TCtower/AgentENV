@@ -15,6 +15,7 @@ These variables are consumed by the repository's Docker Compose and Kubernetes h
 | `AENV_API_KEY` | generated under `$AENV_HOME/secrets/api-key` | Optional API-key override. Runtime nodes also check `/run/secrets/api-key` before creating a managed key. Use one shared value or secret in multi-node deployments. |
 | `API_ADDR` | `0.0.0.0:8000` | Address and port the API server listens on |
 | `AENV_CONFIG_PATH` | `config/default.toml` | Path to the TOML configuration file |
+| `AENV_STATIC_CPU_CONFIG_PATH` | unset | Path to a Firecracker CPU template (JSON) applied to every fresh guest boot (template builds and cold starts) on a node that does not receive a cluster CPU template from the scheduler. Snapshots inherit the resulting CPU state. Example: `config/cpu-templates/aarch64-sve-pac.json` exposes SVE and pointer authentication, which GUI guests that use Mesa llvmpipe (for example Blender under Xvfb) need on aarch64 hosts. |
 | `AENV_LOG_FORMAT` | `compact` | Server log output format: `compact`, `pretty`, or `json` |
 | `AENV_LOG_SPAN_EVENTS` | `off` | Tracing span lifecycle events to emit: `off`, `new`, `enter`, `exit`, `close`, `active`, or `full` |
 | `AENV_NODE_ID` | hostname-derived | Override the runtime node identifier used in observability/admin snapshots |
